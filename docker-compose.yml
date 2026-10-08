@@ -1,6 +1,20 @@
 version: '3.9'
 
 services:
+  orders-api:
+    build:
+      context: .
+      dockerfile: src/Orders.Api/Dockerfile
+    container_name: intralogistics-orders-api
+    environment:
+      ASPNETCORE_URLS: http://+:8080
+      ConnectionStrings__DefaultConnection: Server=sqlserver,1433;Database=IntralogisticsOrders;User Id=sa;Password=P@ssw0rd!2025;TrustServerCertificate=True;Encrypt=False
+    depends_on:
+      sqlserver:
+        condition: service_healthy
+    ports:
+      - "8080:8080"
+
   sqlserver:
     image: mcr.microsoft.com/mssql/server:2022-latest
     container_name: intralogistics-sql
