@@ -1,0 +1,25 @@
+root = true
+
+[*]
+charset = utf-8
+end_of_line = lf
+indent_style = space
+indent_size = 4
+insert_final_newline = true
+trim_trailing_whitespace = true
+
+[*.{csproj,props,targets,json,yml,yaml,md}]
+indent_size = 2
+
+[*.cs]
+dotnet_sort_system_directives_first = true
+
+[*.cs]
+# Syntactic style
+csharp_style_var_when_type_is_apparent = true
+csharp_prefer_braces = true:silent
+
+[*.cs]
+# Warnings
+dotnet_analyzer_diagnostic.category-Style.severity = warning
+CS1591.severity = none
