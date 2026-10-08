@@ -28,7 +28,7 @@ flowchart LR
 
 ## Running the project
 
-1. Install .NET 8 SDK (the project targets .NET 8 as the fallback runtime for current tooling).
+1. Install .NET 10 SDK.
 2. Start infrastructure:
    `docker compose up --build`
 3. Start the API:
@@ -67,3 +67,17 @@ This repository is a working scaffold and implementation baseline based on the p
 ## ADRs
 
 See the ADRs in [docs/adr](docs/adr).
+
+## Phase progress recap
+
+| Phase / Development | Scope | Status |
+| --- | --- | --- |
+| Phase 1 - Foundation + Orders.Api | Solution scaffold, domain foundations, API baseline | InProgress |
+| Phase 1 - Orders API persistence | EF Core DbContext wiring, SQL connection configuration, endpoint persistence | InProgress |
+| Phase 1 - Pallet lifecycle tests | Valid and invalid transition coverage extension | InProgress |
+| Phase 1 - Containerization baseline | Orders.Api Dockerfile and compose service integration | Done |
+| Phase 2 - Messaging | RabbitMQ + MassTransit, outbox/inbox, idempotent consumers | ToDo |
+| Phase 3 - Orchestrator actors | Akka.NET actor hierarchy, supervision, queue backpressure | ToDo |
+| Phase 4 - Rules + routing | NRules policies, Dijkstra property tests, rerouting | ToDo |
+| Phase 5 - Edge | MQTT simulator and store-and-forward gateway | ToDo |
+| Phase 6 - Quality, ops, docs | Observability, CI/CD hardening, runbook completeness | ToDo |

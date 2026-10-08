@@ -8,7 +8,7 @@ The main flow begins with order intake through the API, then splits and stages p
 
 | Technology | Purpose |
 | --- | --- |
-| .NET 8 | Runtime and service implementation |
+| .NET 10 | Runtime and service implementation |
 | ASP.NET Core | REST API and health endpoints |
 | EF Core | Persistence model foundation |
 | Dapper | Read-side query pattern |
