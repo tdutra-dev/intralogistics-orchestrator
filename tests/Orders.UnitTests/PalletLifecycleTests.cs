@@ -6,6 +6,20 @@ namespace Orders.UnitTests;
 
 public sealed class PalletLifecycleTests
 {
+    private static readonly Dictionary<PalletState, HashSet<PalletState>> AllowedTransitions = new()
+    {
+        [PalletState.Created] = new HashSet<PalletState> { PalletState.Building, PalletState.Faulted, PalletState.Cancelled },
+        [PalletState.Building] = new HashSet<PalletState> { PalletState.Built, PalletState.Faulted, PalletState.Cancelled },
+        [PalletState.Built] = new HashSet<PalletState> { PalletState.Wrapped, PalletState.Faulted, PalletState.Cancelled },
+        [PalletState.Wrapped] = new HashSet<PalletState> { PalletState.Labeled, PalletState.Faulted, PalletState.Cancelled },
+        [PalletState.Labeled] = new HashSet<PalletState> { PalletState.Routed, PalletState.Faulted, PalletState.Cancelled },
+        [PalletState.Routed] = new HashSet<PalletState> { PalletState.InTransit, PalletState.Faulted, PalletState.Cancelled },
+        [PalletState.InTransit] = new HashSet<PalletState> { PalletState.Dispatched, PalletState.Faulted, PalletState.Cancelled },
+        [PalletState.Faulted] = new HashSet<PalletState> { PalletState.Building, PalletState.Cancelled },
+        [PalletState.Cancelled] = new HashSet<PalletState>(),
+        [PalletState.Dispatched] = new HashSet<PalletState>()
+    };
+
     [Fact]
     public void Happy_path_transitions_reach_dispatched()
     {
@@ -84,6 +98,37 @@ public sealed class PalletLifecycleTests
 
         order.IsValid.ShouldBeTrue();
         order.TotalWeight.ShouldBe(50m);
+    }
+
+    [Fact]
+    public void Transition_matrix_should_match_domain_rules()
+    {
+        var allStates = Enum.GetValues<PalletState>();
+
+        foreach (var current in allStates)
+        {
+            foreach (var next in allStates)
+            {
+                if (current == next)
+                {
+                    continue;
+                }
+
+                var pallet = new Pallet(Guid.NewGuid(), Guid.NewGuid(), 120m);
+                ForceState(pallet, current);
+
+                var shouldBeAllowed = AllowedTransitions[current].Contains(next);
+                if (shouldBeAllowed)
+                {
+                    pallet.TransitionTo(next);
+                    pallet.State.ShouldBe(next);
+                }
+                else
+                {
+                    Should.Throw<InvalidOperationException>(() => pallet.TransitionTo(next));
+                }
+            }
+        }
     }
 
     private static void ForceState(Pallet pallet, PalletState state)

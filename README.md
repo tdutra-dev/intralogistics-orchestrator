@@ -70,14 +70,16 @@ See the ADRs in [docs/adr](docs/adr).
 
 ## Phase progress recap
 
-| Phase / Development | Scope | Status |
-| --- | --- | --- |
-| Phase 1 - Foundation + Orders.Api | Solution scaffold, domain foundations, API baseline | InProgress |
-| Phase 1 - Orders API persistence | EF Core DbContext wiring, SQL connection configuration, endpoint persistence | InProgress |
-| Phase 1 - Pallet lifecycle tests | Valid and invalid transition coverage extension | InProgress |
-| Phase 1 - Containerization baseline | Orders.Api Dockerfile and compose service integration | Done |
-| Phase 2 - Messaging | RabbitMQ + MassTransit, outbox/inbox, idempotent consumers | ToDo |
-| Phase 3 - Orchestrator actors | Akka.NET actor hierarchy, supervision, queue backpressure | ToDo |
-| Phase 4 - Rules + routing | NRules policies, Dijkstra property tests, rerouting | ToDo |
-| Phase 5 - Edge | MQTT simulator and store-and-forward gateway | ToDo |
-| Phase 6 - Quality, ops, docs | Observability, CI/CD hardening, runbook completeness | ToDo |
+Status legend: Done | InProgress | ToDo
+
+| Status | Phase | Scope | Current evidence | Next step |
+| --- | --- | --- | --- | --- |
+| Done | Phase 1 - Runtime and build stability | .NET 10 migration and build reliability | `net10.0` applied, `dotnet restore` and `dotnet build -warnaserror` pass | Keep dependency updates under control |
+| Done | Phase 1 - Containerization baseline | Local runnable container setup | `Orders.Api` Dockerfile and compose service are present | Validate full compose flow from a clean environment |
+| Done | Phase 1 - Foundation + Orders.Api | Scaffold, baseline architecture, API entry points | Orders API endpoints implemented, EF migration generated, SQL report procedure bootstrap added | Extend behavior in Phase 2 with messaging/outbox integration |
+| Done | Phase 1 - Domain and tests hardening | Pallet lifecycle and architecture guardrails | Transition matrix coverage added; architecture, unit, and SQL integration tests pass (`dotnet test` green) | Keep growing domain coverage with Phase 3 actor behavior tests |
+| ToDo | Phase 2 - Messaging | RabbitMQ + MassTransit + outbox/inbox | Contracts project exists, messaging flow not implemented yet | Implement publisher/consumer flow with idempotency and retries |
+| ToDo | Phase 3 - Orchestrator actors | Akka.NET hierarchy, supervision, backpressure | Host skeleton exists | Implement actors and actor-level supervision/fault tests |
+| ToDo | Phase 4 - Rules + routing | NRules policies and dynamic rerouting | Routing domain baseline exists | Add rules, property-based routing tests, rerouting scenario |
+| ToDo | Phase 5 - Edge | Simulator + MQTT + store-and-forward | Simulator and gateway skeletons exist | Implement telemetry buffering, deduplication, outage recovery |
+| ToDo | Phase 6 - Quality, ops, docs | Observability, CI/CD, runbook completeness | Initial docs and ADR set present | Add dashboards, CI hardening, final runbook and recap |

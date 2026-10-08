@@ -9,6 +9,10 @@
   <ItemGroup>
     <ProjectReference Include="../Orders.Application/Orders.Application.csproj" />
     <ProjectReference Include="../Orders.Infrastructure/Orders.Infrastructure.csproj" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Design">
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+    </PackageReference>
     <PackageReference Include="Microsoft.AspNetCore.Mvc.Versioning" />
   </ItemGroup>
 </Project>

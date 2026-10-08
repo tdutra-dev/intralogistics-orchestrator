@@ -49,7 +49,7 @@ public sealed class CustomerOrder
     public OrderPriority Priority { get; private set; } = OrderPriority.Normal;
     public bool HazardousFlag { get; private set; }
     public OrderStatus Status { get; private set; }
-    public DateTime CreatedAtUtc { get; }
+    public DateTime CreatedAtUtc { get; private set; }
     public IReadOnlyCollection<CustomerOrderLine> Lines => _lines;
 
     public void AddLine(string sku, int quantity, decimal weightKg)

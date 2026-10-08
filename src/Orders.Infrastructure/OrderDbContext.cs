@@ -18,13 +18,6 @@ public sealed class OrderDbContext : DbContext
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
-        var orderLinesComparer = new ValueComparer<List<CustomerOrderLine>>(
-            (left, right) =>
-                ReferenceEquals(left, right) ||
-                left != null && right != null && left.SequenceEqual(right),
-            value => value.Aggregate(0, (hash, line) => HashCode.Combine(hash, line.GetHashCode())),
-            value => value.ToList());
-
         var timelineComparer = new ValueComparer<List<string>>(
             (left, right) =>
                 ReferenceEquals(left, right) ||
@@ -41,13 +34,17 @@ public sealed class OrderDbContext : DbContext
             entity.Property(x => x.IdempotencyKey).HasMaxLength(200);
             entity.HasIndex(x => x.IdempotencyKey).IsUnique();
 
-            entity
-                .Property<List<CustomerOrderLine>>("_lines")
-                .HasColumnName("Lines")
-                .HasConversion(
-                    value => JsonSerializer.Serialize(value, JsonOptions),
-                    value => JsonSerializer.Deserialize<List<CustomerOrderLine>>(value, JsonOptions) ?? new List<CustomerOrderLine>())
-                .Metadata.SetValueComparer(orderLinesComparer);
+            entity.Navigation(x => x.Lines).UsePropertyAccessMode(PropertyAccessMode.Field);
+            entity.OwnsMany(x => x.Lines, line =>
+            {
+                line.ToTable("OrderLines");
+                line.WithOwner().HasForeignKey("OrderId");
+                line.Property<int>("Id");
+                line.HasKey("Id");
+                line.Property(x => x.Sku).HasMaxLength(64).IsRequired();
+                line.Property(x => x.Quantity).IsRequired();
+                line.Property(x => x.WeightKg).HasColumnType("decimal(18,2)").IsRequired();
+            });
         });
 
         modelBuilder.Entity<Pallet>(entity =>

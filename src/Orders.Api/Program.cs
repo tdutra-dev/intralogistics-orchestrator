@@ -29,6 +29,7 @@ using (var scope = app.Services.CreateScope())
 {
     var db = scope.ServiceProvider.GetRequiredService<OrderDbContext>();
     db.Database.EnsureCreated();
+    await SqlServerBootstrapper.EnsureReportingProcedureAsync(db, CancellationToken.None);
 }
 
 app.MapGet("/health/live", () => Results.Ok(new { status = "live" }));

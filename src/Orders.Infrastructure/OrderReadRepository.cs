@@ -1,5 +1,6 @@
 using Dapper;
 using Microsoft.Data.SqlClient;
+using System.Data;
 
 namespace Orders.Infrastructure;
 
@@ -31,12 +32,36 @@ public sealed class OrderReadRepository
             SELECT
                 Id,
                 CustomerId,
-                CAST(Status AS NVARCHAR(32)) AS Status,
-                CAST(Priority AS NVARCHAR(32)) AS Priority,
+                CASE [Status]
+                    WHEN 0 THEN 'Received'
+                    WHEN 1 THEN 'Building'
+                    WHEN 2 THEN 'Ready'
+                    WHEN 3 THEN 'Cancelled'
+                    WHEN 4 THEN 'Dispatched'
+                    ELSE CAST([Status] AS NVARCHAR(32))
+                END AS Status,
+                CASE [Priority]
+                    WHEN 0 THEN 'Low'
+                    WHEN 1 THEN 'Normal'
+                    WHEN 2 THEN 'Urgent'
+                    ELSE CAST([Priority] AS NVARCHAR(32))
+                END AS Priority,
                 CreatedAtUtc
             FROM dbo.Orders
-            WHERE (@status IS NULL OR CAST(Status AS NVARCHAR(32)) = @status)
-              AND (@priority IS NULL OR CAST(Priority AS NVARCHAR(32)) = @priority)
+            WHERE (@status IS NULL OR CASE [Status]
+                    WHEN 0 THEN 'Received'
+                    WHEN 1 THEN 'Building'
+                    WHEN 2 THEN 'Ready'
+                    WHEN 3 THEN 'Cancelled'
+                    WHEN 4 THEN 'Dispatched'
+                    ELSE CAST([Status] AS NVARCHAR(32))
+                END = @status)
+              AND (@priority IS NULL OR CASE [Priority]
+                    WHEN 0 THEN 'Low'
+                    WHEN 1 THEN 'Normal'
+                    WHEN 2 THEN 'Urgent'
+                    ELSE CAST([Priority] AS NVARCHAR(32))
+                END = @priority)
               AND (@from IS NULL OR CreatedAtUtc >= @from)
               AND (@to IS NULL OR CreatedAtUtc <= @to)
             ORDER BY CreatedAtUtc DESC
@@ -63,30 +88,9 @@ public sealed class OrderReadRepository
         await using var connection = new SqlConnection(_connectionString);
         await connection.OpenAsync(cancellationToken);
 
-        const string sql = """
-            SELECT
-                COUNT(1) AS TotalOrders,
-                AVG(CAST([TotalWeight] AS decimal(18,2))) AS AverageOrderWeightKg,
-                SUM(CASE WHEN CAST([Status] AS NVARCHAR(32)) = 'Cancelled' THEN 1 ELSE 0 END) AS CancelledOrders
-            FROM (
-                SELECT
-                    o.[Id],
-                    o.[Status],
-                    (
-                        SELECT SUM(CAST(line.WeightKg * line.Quantity AS decimal(18,2)))
-                        FROM OPENJSON(o.[Lines])
-                        WITH (
-                            Sku nvarchar(64) '$.sku',
-                            Quantity int '$.quantity',
-                            WeightKg decimal(18,2) '$.weightKg'
-                        ) AS line
-                    ) AS TotalWeight
-                FROM dbo.Orders o
-            ) source;
-            """;
-
         var result = await connection.QuerySingleAsync<ThroughputReportResponse>(new CommandDefinition(
-            sql,
+            "dbo.sp_ThroughputReport",
+            commandType: CommandType.StoredProcedure,
             cancellationToken: cancellationToken));
 
         return result;
