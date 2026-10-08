@@ -12,8 +12,8 @@ public sealed class ArchitectureRulesTests
     {
         var assembly = typeof(CustomerOrder).Assembly;
         var result = Types.InAssembly(assembly)
-            .That()
-            .DoNotHaveNameEndingWith("Infrastructure")
+            .Should()
+            .NotHaveDependencyOn("Orders.Infrastructure")
             .GetResult();
 
         result.IsSuccessful.ShouldBeTrue();

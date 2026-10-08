@@ -1,3 +1,4 @@
+using Akka.Actor;
 using Akka.Hosting;
 using Microsoft.Extensions.Hosting;
 
@@ -9,7 +10,8 @@ builder.Services.AddAkka("orchestrator-system", (akkaBuilder, provider) =>
 {
     akkaBuilder.WithActors((system, registry) =>
     {
-        registry.Register<OrderManagerActor>("order-manager");
+        var orderManager = system.ActorOf(Props.Create<OrderManagerActor>(), "order-manager");
+        registry.Register<OrderManagerActor>(orderManager);
     });
 });
 
@@ -27,7 +29,10 @@ public sealed class OrchestratorBackgroundService : BackgroundService
     }
 }
 
-public sealed class OrderManagerActor
+public sealed class OrderManagerActor : ReceiveActor
 {
-    public string Name => "OrderManagerActor";
+    public OrderManagerActor()
+    {
+        ReceiveAny(_ => { });
+    }
 }

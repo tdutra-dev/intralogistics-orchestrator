@@ -1,3 +1,5 @@
+using BuildingBlocks;
+
 namespace Orders.Domain;
 
 public sealed record WarehouseNode(string Id, string Kind);

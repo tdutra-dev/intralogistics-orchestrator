@@ -21,14 +21,14 @@ public sealed class OrderDbContext : DbContext
         var orderLinesComparer = new ValueComparer<List<CustomerOrderLine>>(
             (left, right) =>
                 ReferenceEquals(left, right) ||
-                left is not null && right is not null && left.SequenceEqual(right),
+                left != null && right != null && left.SequenceEqual(right),
             value => value.Aggregate(0, (hash, line) => HashCode.Combine(hash, line.GetHashCode())),
             value => value.ToList());
 
         var timelineComparer = new ValueComparer<List<string>>(
             (left, right) =>
                 ReferenceEquals(left, right) ||
-                left is not null && right is not null && left.SequenceEqual(right),
+                left != null && right != null && left.SequenceEqual(right),
             value => value.Aggregate(0, (hash, item) => HashCode.Combine(hash, item.GetHashCode())),
             value => value.ToList());
 

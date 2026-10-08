@@ -9,6 +9,6 @@
   <ItemGroup>
     <ProjectReference Include="../Orchestrator.Application/Orchestrator.Application.csproj" />
     <PackageReference Include="Akka.Hosting" />
-    <PackageReference Include="Microsoft.Extensions.Hosting" Version="8.0.0" />
+    <PackageReference Include="Microsoft.Extensions.Hosting" />
   </ItemGroup>
 </Project>

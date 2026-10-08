@@ -9,8 +9,6 @@
   <ItemGroup>
     <ProjectReference Include="../Orders.Application/Orders.Application.csproj" />
     <ProjectReference Include="../Orders.Infrastructure/Orders.Infrastructure.csproj" />
-    <PackageReference Include="Microsoft.AspNetCore.OpenApi" />
     <PackageReference Include="Microsoft.AspNetCore.Mvc.Versioning" />
-    <PackageReference Include="Microsoft.Extensions.Diagnostics.HealthChecks" />
   </ItemGroup>
 </Project>

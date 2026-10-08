@@ -8,7 +8,6 @@ using Orders.Infrastructure;
 var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddEndpointsApiExplorer();
-builder.Services.AddOpenApi();
 builder.Services.AddHealthChecks();
 
 builder.Services.AddDbContext<OrderDbContext>(options =>
@@ -35,7 +34,7 @@ using (var scope = app.Services.CreateScope())
 app.MapGet("/health/live", () => Results.Ok(new { status = "live" }));
 app.MapGet("/health/ready", () => Results.Ok(new { status = "ready" }));
 
-app.MapPost("/api/v1/orders", async Task<Results<Created<OrderResponse>, BadRequest<object>, Conflict<object>>>
+app.MapPost("/api/v1/orders", async Task<IResult>
     ([FromBody] CreateOrderRequest request, HttpContext httpContext, OrderApplicationService service, OrderDbContext dbContext, CancellationToken cancellationToken) =>
 {
     var idempotencyKey = httpContext.Request.Headers["Idempotency-Key"].FirstOrDefault();
@@ -149,7 +148,7 @@ app.MapGet("/api/v1/pallets/{id:guid}/timeline", async Task<Results<Ok<IEnumerab
         return TypedResults.NotFound();
     }
 
-    return TypedResults.Ok(pallet.Timeline);
+    return TypedResults.Ok(pallet.Timeline.AsEnumerable());
 });
 
 app.MapGet("/api/v1/reports/throughput", async Task<Ok<ThroughputReportResponse>>
