@@ -37,12 +37,26 @@ flowchart LR
 4. Optionally start orchestrator and edge workers:
    `dotnet run --project src/Orchestrator.Host/Orchestrator.Host.csproj`
    `dotnet run --project src/Edge.Gateway/Edge.Gateway.csproj`
+5. Start the simulator:
+   `dotnet run --project src/Machine.Simulator/Machine.Simulator.csproj`
 
 ## Testing
 
 ```bash
 dotnet test
 ```
+
+Metrics endpoint for Prometheus scraping: `/metrics`
+
+## Edge outage recovery demo
+
+1. Start the stack and run the gateway plus simulator.
+2. Stop RabbitMQ temporarily:
+   `docker compose stop rabbitmq`
+3. Let the simulator continue publishing telemetry for at least 10 seconds.
+4. Restart RabbitMQ:
+   `docker compose start rabbitmq`
+5. Observe the gateway logs: buffered telemetry is flushed in order after reconnection, without duplicate `(MachineId, Sequence)` deliveries.
 
 ## Project structure
 
@@ -75,9 +89,9 @@ See the ADRs in [docs/adr](docs/adr).
 
 ```mermaid
 pie title Phase Progress
-   "Done" : 7
+   "Done" : 8
    "InProgress" : 0
-   "ToDo" : 2
+   "ToDo" : 1
 ```
 
 ```mermaid
@@ -90,14 +104,14 @@ flowchart LR
       D5[Phase 2 - Messaging]
       D6[Phase 3 - Orchestrator actors]
       D7[Phase 4 - Rules + routing]
+      D8[Phase 5 - Edge]
    end
 
    subgraph ToDo
-      T5[Phase 5 - Edge]
       T6[Phase 6 - Quality, ops, docs]
    end
 
-   D4 --> D5 --> D6 --> D7 --> T5 --> T6
+   D4 --> D5 --> D6 --> D7 --> D8 --> T6
 ```
 
 ### Done
@@ -111,10 +125,10 @@ flowchart LR
 | Phase 2 - Messaging | RabbitMQ + MassTransit + outbox/inbox | Order creation persists an outbox event, the dispatcher publishes it, and the orchestrator consumer deduplicates deliveries |
 | Phase 3 - Orchestrator actors | Akka.NET hierarchy, supervision, backpressure | Supervised machine queue actor enforces backpressure and restarts cleanly after fault injection |
 | Phase 4 - Rules + routing | NRules + dynamic rerouting | NRules-backed route planning computes the shortest path and reroutes around blocked nodes with unit coverage |
+| Phase 5 - Edge | Simulator + MQTT + store-and-forward | Simulator telemetry is buffered in SQLite during broker outage, deduplicated by `(MachineId, Sequence)`, and flushed after recovery |
 
 ### Next (ToDo)
 
 | Phase | Focus now | Next concrete step |
 | --- | --- | --- |
-| Phase 5 - Edge | Simulator + MQTT + store-and-forward | Implement buffering, deduplication, outage recovery tests |
 | Phase 6 - Quality, ops, docs | Observability, CI/CD, runbook completeness | Add dashboards, CI hardening, final runbook and recap |

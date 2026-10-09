@@ -3,6 +3,8 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using System.Text.Json;
 using MassTransit;
+using OpenTelemetry.Metrics;
+using OpenTelemetry.Trace;
 using Orders.Application;
 using Orders.Domain;
 using Orders.Infrastructure;
@@ -11,6 +13,15 @@ var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddHealthChecks();
+builder.Services.AddOpenTelemetry()
+    .WithTracing(tracing => tracing
+        .AddSource(OrdersApiTelemetry.ActivitySourceName)
+        .AddAspNetCoreInstrumentation()
+        .AddHttpClientInstrumentation())
+    .WithMetrics(metrics => metrics
+        .AddAspNetCoreInstrumentation()
+        .AddMeter(OrdersApiTelemetry.MeterName)
+        .AddPrometheusExporter());
 
 builder.Services.AddMassTransit(x =>
 {
@@ -51,10 +62,12 @@ using (var scope = app.Services.CreateScope())
 
 app.MapGet("/health/live", () => Results.Ok(new { status = "live" }));
 app.MapGet("/health/ready", () => Results.Ok(new { status = "ready" }));
+app.MapPrometheusScrapingEndpoint();
 
 app.MapPost("/api/v1/orders", async Task<IResult>
     ([FromBody] CreateOrderRequest request, HttpContext httpContext, OrderApplicationService service, OrderDbContext dbContext, CancellationToken cancellationToken) =>
 {
+    using var activity = OrdersApiTelemetry.ActivitySource.StartActivity("orders.create");
     var idempotencyKey = httpContext.Request.Headers["Idempotency-Key"].FirstOrDefault();
     if (!string.IsNullOrWhiteSpace(idempotencyKey))
     {
@@ -93,6 +106,10 @@ app.MapPost("/api/v1/orders", async Task<IResult>
         JsonSerializer.Serialize(integrationEvent),
         integrationEvent.UtcTimestamp), cancellationToken);
     await dbContext.SaveChangesAsync(cancellationToken);
+    activity?.SetTag("order.id", order.Id);
+    activity?.SetTag("customer.id", order.CustomerId);
+    OrdersApiTelemetry.OrdersCreated.Add(1);
+    OrdersApiTelemetry.OutboxMessagesStaged.Add(1);
 
     return TypedResults.Created($"/api/v1/orders/{order.Id}", new OrderResponse(order.Id, order.CustomerId, order.Status.ToString(), order.Priority.ToString()));
 });
@@ -235,6 +252,7 @@ public sealed class OrderOutboxDispatcher : BackgroundService
                         {
                             await publishEndpoint.Publish(eventMessage, stoppingToken);
                             message.MarkDispatched();
+                            OrdersApiTelemetry.OutboxMessagesPublished.Add(1);
                         }
                     }
                 }
