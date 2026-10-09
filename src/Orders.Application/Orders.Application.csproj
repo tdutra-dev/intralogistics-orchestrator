@@ -6,6 +6,7 @@
     <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
   </PropertyGroup>
   <ItemGroup>
+    <PackageReference Include="NRules" />
     <ProjectReference Include="../Orders.Domain/Orders.Domain.csproj" />
   </ItemGroup>
 </Project>
