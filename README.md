@@ -77,7 +77,7 @@ Metrics endpoint for Prometheus scraping: `/metrics`
 
 ## Limitations
 
-This repository is a working scaffold and implementation baseline based on the provided specification. Some advanced enterprise integrations and full end-to-end runtime deployment are represented as architecture-first skeletons rather than a full production system.
+This repository delivers a complete local reference implementation of the specified intralogistics platform, including API, orchestration, routing, messaging, edge buffering, monitoring, and automated test coverage. Stretch goals such as alternative telemetry backends or additional UI surfaces remain optional extensions rather than core gaps.
 
 ## ADRs
 
@@ -89,9 +89,9 @@ See the ADRs in [docs/adr](docs/adr).
 
 ```mermaid
 pie title Phase Progress
-   "Done" : 8
+   "Done" : 9
    "InProgress" : 0
-   "ToDo" : 1
+   "ToDo" : 0
 ```
 
 ```mermaid
@@ -105,13 +105,10 @@ flowchart LR
       D6[Phase 3 - Orchestrator actors]
       D7[Phase 4 - Rules + routing]
       D8[Phase 5 - Edge]
+      D9[Phase 6 - Quality, ops, docs]
    end
 
-   subgraph ToDo
-      T6[Phase 6 - Quality, ops, docs]
-   end
-
-   D4 --> D5 --> D6 --> D7 --> D8 --> T6
+   D4 --> D5 --> D6 --> D7 --> D8 --> D9
 ```
 
 ### Done
@@ -126,9 +123,8 @@ flowchart LR
 | Phase 3 - Orchestrator actors | Akka.NET hierarchy, supervision, backpressure | Supervised machine queue actor enforces backpressure and restarts cleanly after fault injection |
 | Phase 4 - Rules + routing | NRules + dynamic rerouting | NRules-backed route planning computes the shortest path and reroutes around blocked nodes with unit coverage |
 | Phase 5 - Edge | Simulator + MQTT + store-and-forward | Simulator telemetry is buffered in SQLite during broker outage, deduplicated by `(MachineId, Sequence)`, and flushed after recovery |
+| Phase 6 - Quality, ops, docs | Observability, CI/CD, runbook completeness | Prometheus metrics, Grafana dashboard provisioning, CI workflow, final runbook, and consolidated recap are in place |
 
-### Next (ToDo)
+### Final status
 
-| Phase | Focus now | Next concrete step |
-| --- | --- | --- |
-| Phase 6 - Quality, ops, docs | Observability, CI/CD, runbook completeness | Add dashboards, CI hardening, final runbook and recap |
+All planned phases in the current roadmap are complete. The repository is ready for local end-to-end demos, CI validation, and further optional extensions.
