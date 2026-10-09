@@ -1,6 +1,8 @@
 using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using System.Text.Json;
+using MassTransit;
 using Orders.Application;
 using Orders.Domain;
 using Orders.Infrastructure;
@@ -10,11 +12,26 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddHealthChecks();
 
+builder.Services.AddMassTransit(x =>
+{
+    x.UsingRabbitMq((context, cfg) =>
+    {
+        cfg.Host(builder.Configuration.GetValue<string>("Messaging:RabbitMqHost") ?? "rabbitmq", "/", host =>
+        {
+            host.Username(builder.Configuration.GetValue<string>("Messaging:RabbitMqUsername") ?? "guest");
+            host.Password(builder.Configuration.GetValue<string>("Messaging:RabbitMqPassword") ?? "guest");
+        });
+
+        cfg.ConfigureEndpoints(context);
+    });
+});
+
 builder.Services.AddDbContext<OrderDbContext>(options =>
 {
     options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection"));
 });
 
+builder.Services.AddHostedService<OrderOutboxDispatcher>();
 builder.Services.AddSingleton<OrderApplicationService>();
 builder.Services.AddScoped<OrderReadRepository>(provider =>
 {
@@ -68,7 +85,13 @@ app.MapPost("/api/v1/orders", async Task<IResult>
         order.SetIdempotencyKey(idempotencyKey);
     }
 
+    var integrationEvent = new Contracts.OrderReceived(order.Id, order.CustomerId, DateTime.UtcNow);
     await dbContext.Orders.AddAsync(order, cancellationToken);
+    await dbContext.OutboxMessages.AddAsync(new IntegrationEventOutboxMessage(
+        integrationEvent.EventId,
+        typeof(Contracts.OrderReceived).FullName!,
+        JsonSerializer.Serialize(integrationEvent),
+        integrationEvent.UtcTimestamp), cancellationToken);
     await dbContext.SaveChangesAsync(cancellationToken);
 
     return TypedResults.Created($"/api/v1/orders/{order.Id}", new OrderResponse(order.Id, order.CustomerId, order.Status.ToString(), order.Priority.ToString()));
@@ -175,3 +198,59 @@ public sealed record OrderDetailsResponse(
     IReadOnlyCollection<PalletResponse> Pallets);
 
 public sealed record PalletResponse(Guid Id, string State, decimal WeightKg, string? AssignedRoute, IReadOnlyCollection<string> Timeline);
+
+public sealed class OrderOutboxDispatcher : BackgroundService
+{
+    private readonly IServiceScopeFactory _scopeFactory;
+    private readonly ILogger<OrderOutboxDispatcher> _logger;
+
+    public OrderOutboxDispatcher(IServiceScopeFactory scopeFactory, ILogger<OrderOutboxDispatcher> logger)
+    {
+        _scopeFactory = scopeFactory;
+        _logger = logger;
+    }
+
+    protected override async Task ExecuteAsync(CancellationToken stoppingToken)
+    {
+        while (!stoppingToken.IsCancellationRequested)
+        {
+            try
+            {
+                using var scope = _scopeFactory.CreateScope();
+                var dbContext = scope.ServiceProvider.GetRequiredService<OrderDbContext>();
+                var publishEndpoint = scope.ServiceProvider.GetRequiredService<IPublishEndpoint>();
+
+                var pendingMessages = await dbContext.OutboxMessages
+                    .Where(x => x.DispatchedAtUtc == null)
+                    .OrderBy(x => x.OccurredAtUtc)
+                    .Take(25)
+                    .ToListAsync(stoppingToken);
+
+                foreach (var message in pendingMessages)
+                {
+                    if (message.EventType == typeof(Contracts.OrderReceived).FullName)
+                    {
+                        var eventMessage = JsonSerializer.Deserialize<Contracts.OrderReceived>(message.PayloadJson);
+                        if (eventMessage is not null)
+                        {
+                            await publishEndpoint.Publish(eventMessage, stoppingToken);
+                            message.MarkDispatched();
+                        }
+                    }
+                }
+
+                await dbContext.SaveChangesAsync(stoppingToken);
+            }
+            catch (OperationCanceledException) when (stoppingToken.IsCancellationRequested)
+            {
+                break;
+            }
+            catch (Exception exception)
+            {
+                _logger.LogError(exception, "Failed to dispatch outbox messages.");
+            }
+
+            await Task.Delay(TimeSpan.FromSeconds(2), stoppingToken);
+        }
+    }
+}

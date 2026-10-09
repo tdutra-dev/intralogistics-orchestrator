@@ -22,6 +22,7 @@
     </PackageReference>
   </ItemGroup>
   <ItemGroup>
+    <ProjectReference Include="../../src/Contracts/Contracts.csproj" />
     <ProjectReference Include="../../src/Orders.Domain/Orders.Domain.csproj" />
     <ProjectReference Include="../../src/Orders.Infrastructure/Orders.Infrastructure.csproj" />
   </ItemGroup>

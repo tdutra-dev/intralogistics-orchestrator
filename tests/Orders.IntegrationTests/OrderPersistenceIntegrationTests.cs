@@ -51,6 +51,35 @@ public sealed class OrderPersistenceIntegrationTests : IAsyncLifetime
     }
 
     [Fact]
+    public async Task Should_persist_outbox_message_with_order()
+    {
+        var orderId = Guid.NewGuid();
+
+        await using (var dbContext = CreateDbContext())
+        {
+            var order = new CustomerOrder(orderId, "customer-outbox", "north", "dock-a");
+            order.AddLine("SKU-OUTBOX", 1, 5m);
+
+            var integrationEvent = new Contracts.OrderReceived(order.Id, order.CustomerId, DateTime.UtcNow);
+
+            await dbContext.Orders.AddAsync(order);
+            await dbContext.OutboxMessages.AddAsync(new IntegrationEventOutboxMessage(
+                integrationEvent.EventId,
+                typeof(Contracts.OrderReceived).FullName!,
+                System.Text.Json.JsonSerializer.Serialize(integrationEvent),
+                integrationEvent.UtcTimestamp));
+            await dbContext.SaveChangesAsync();
+        }
+
+        await using (var dbContext = CreateDbContext())
+        {
+            var outboxMessages = await dbContext.OutboxMessages.AsNoTracking().ToListAsync();
+
+            outboxMessages.Any(x => x.EventType == typeof(Contracts.OrderReceived).FullName && x.DispatchedAtUtc == null).ShouldBeTrue();
+        }
+    }
+
+    [Fact]
     public async Task Should_enforce_unique_idempotency_key()
     {
         await using var dbContext = CreateDbContext();

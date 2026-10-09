@@ -7,6 +7,7 @@
     <GenerateDocumentationFile>true</GenerateDocumentationFile>
   </PropertyGroup>
   <ItemGroup>
+    <ProjectReference Include="../Contracts/Contracts.csproj" />
     <ProjectReference Include="../Orders.Application/Orders.Application.csproj" />
     <ProjectReference Include="../Orders.Infrastructure/Orders.Infrastructure.csproj" />
     <PackageReference Include="Microsoft.EntityFrameworkCore.Design">
@@ -14,5 +15,8 @@
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
     </PackageReference>
     <PackageReference Include="Microsoft.AspNetCore.Mvc.Versioning" />
+    <PackageReference Include="MassTransit" />
+    <PackageReference Include="MassTransit.EntityFrameworkCore" />
+    <PackageReference Include="MassTransit.RabbitMQ" />
   </ItemGroup>
 </Project>

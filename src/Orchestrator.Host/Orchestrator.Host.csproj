@@ -7,7 +7,12 @@
     <UserSecretsId>intralogistics-orchestrator-host</UserSecretsId>
   </PropertyGroup>
   <ItemGroup>
+    <ProjectReference Include="../Orchestrator.Domain/Orchestrator.Domain.csproj" />
+    <ProjectReference Include="../Contracts/Contracts.csproj" />
     <ProjectReference Include="../Orchestrator.Application/Orchestrator.Application.csproj" />
+    <PackageReference Include="MassTransit" />
+    <PackageReference Include="MassTransit.EntityFrameworkCore" />
+    <PackageReference Include="MassTransit.RabbitMQ" />
     <PackageReference Include="Akka.Hosting" />
     <PackageReference Include="Microsoft.Extensions.Hosting" />
   </ItemGroup>
