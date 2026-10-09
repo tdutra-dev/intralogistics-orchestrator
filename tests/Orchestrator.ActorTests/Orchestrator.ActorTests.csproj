@@ -18,5 +18,6 @@
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="../../src/Orchestrator.Domain/Orchestrator.Domain.csproj" />
+    <ProjectReference Include="../../src/Orchestrator.Host/Orchestrator.Host.csproj" />
   </ItemGroup>
 </Project>

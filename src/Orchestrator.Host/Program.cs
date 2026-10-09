@@ -56,9 +56,63 @@ public sealed class OrchestratorBackgroundService : BackgroundService
 
 public sealed class OrderManagerActor : ReceiveActor
 {
-    public OrderManagerActor()
+    private readonly IActorRef _machineQueueActor;
+
+    public OrderManagerActor() : this(10)
     {
-        ReceiveAny(_ => { });
+    }
+
+    public OrderManagerActor(int maxQueueDepth)
+    {
+        _machineQueueActor = Context.ActorOf(Props.Create(() => new MachineQueueActor(maxQueueDepth)), "machine-queue");
+
+        Receive<OrderReceivedMessage>(message => _machineQueueActor.Forward(new QueueOrderMessage(message.OrderId)));
+        Receive<MachineFaultMessage>(message => _machineQueueActor.Forward(message));
+        Receive<MachineRecoveryMessage>(message => _machineQueueActor.Forward(message));
+        Receive<RouteBlockedMessage>(message => _machineQueueActor.Forward(message));
+        Receive<QueryQueueDepthMessage>(message => _machineQueueActor.Forward(message));
+    }
+
+    protected override SupervisorStrategy SupervisorStrategy() => new OneForOneStrategy(
+        ex => ex is InvalidOperationException ? Directive.Restart : Directive.Escalate);
+}
+
+public sealed class MachineQueueActor : ReceiveActor
+{
+    private readonly MachineQueue _queue;
+
+    public MachineQueueActor(int maxQueueDepth = 10)
+    {
+        _queue = new MachineQueue(maxQueueDepth);
+
+        Receive<QueueOrderMessage>(message =>
+        {
+            if (_queue.TryEnqueue(message.OrderId))
+            {
+                Sender.Tell(new OrderQueuedMessage(message.OrderId, _queue.Count));
+            }
+            else
+            {
+                Sender.Tell(new OrderBackpressuredMessage(message.OrderId, _queue.Count));
+            }
+        });
+
+        Receive<MachineFaultMessage>(_ => throw new InvalidOperationException("Machine queue faulted."));
+
+        Receive<MachineRecoveryMessage>(_ =>
+        {
+            if (_queue.Dequeue() is Guid palletId)
+            {
+                Sender.Tell(new OrderQueuedMessage(palletId, _queue.Count));
+            }
+            else
+            {
+                Sender.Tell(new QueueDepthMessage(_queue.Count));
+            }
+        });
+
+        Receive<RouteBlockedMessage>(_ => Sender.Tell(new QueueDepthMessage(_queue.Count)));
+        Receive<QueryQueueDepthMessage>(_ => Sender.Tell(new QueueDepthMessage(_queue.Count)));
     }
 }
 

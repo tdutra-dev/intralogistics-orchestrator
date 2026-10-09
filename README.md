@@ -75,9 +75,9 @@ See the ADRs in [docs/adr](docs/adr).
 
 ```mermaid
 pie title Phase Progress
-   "Done" : 4
+   "Done" : 6
    "InProgress" : 0
-   "ToDo" : 5
+   "ToDo" : 3
 ```
 
 ```mermaid
@@ -87,17 +87,17 @@ flowchart LR
       D2[Phase 1 - Containerization baseline]
       D3[Phase 1 - Foundation + Orders.Api]
       D4[Phase 1 - Domain and tests hardening]
+      D5[Phase 2 - Messaging]
+      D6[Phase 3 - Orchestrator actors]
    end
 
    subgraph ToDo
-      T2[Phase 2 - Messaging]
-      T3[Phase 3 - Orchestrator actors]
       T4[Phase 4 - Rules + routing]
       T5[Phase 5 - Edge]
       T6[Phase 6 - Quality, ops, docs]
    end
 
-   D4 --> T2 --> T3 --> T4 --> T5 --> T6
+   D4 --> D5 --> D6 --> T4 --> T5 --> T6
 ```
 
 ### Done
@@ -108,13 +108,13 @@ flowchart LR
 | Phase 1 - Containerization baseline | Local runnable container setup | `Orders.Api` Dockerfile and compose service present |
 | Phase 1 - Foundation + Orders.Api | Scaffold, baseline architecture, API entry points | Endpoints implemented, EF migration generated, SQL report stored procedure bootstrap added |
 | Phase 1 - Domain and tests hardening | Pallet lifecycle and architecture guardrails | Unit, architecture, and SQL integration tests pass (`dotnet test`) |
+| Phase 2 - Messaging | RabbitMQ + MassTransit + outbox/inbox | Order creation persists an outbox event, the dispatcher publishes it, and the orchestrator consumer deduplicates deliveries |
+| Phase 3 - Orchestrator actors | Akka.NET hierarchy, supervision, backpressure | Supervised machine queue actor enforces backpressure and restarts cleanly after fault injection |
 
 ### Next (ToDo)
 
 | Phase | Focus now | Next concrete step |
 | --- | --- | --- |
-| Phase 2 - Messaging | RabbitMQ + MassTransit + outbox/inbox | Implement publish/consume with idempotency and retries |
-| Phase 3 - Orchestrator actors | Akka.NET hierarchy, supervision, backpressure | Implement actors and supervision/fault-path tests |
 | Phase 4 - Rules + routing | NRules + dynamic rerouting | Add rules, property-based routing tests, rerouting scenario |
 | Phase 5 - Edge | Simulator + MQTT + store-and-forward | Implement buffering, deduplication, outage recovery tests |
 | Phase 6 - Quality, ops, docs | Observability, CI/CD, runbook completeness | Add dashboards, CI hardening, final runbook and recap |
