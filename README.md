@@ -1,6 +1,7 @@
 # Smart Intralogistics Orchestrator
 
-This repository implements the project skeleton for a modern intralogistics orchestration platform described in the specification. It follows a clean architecture, CQRS-oriented API, event-driven messaging model, and actor-based orchestrator pattern for pallet flows, routing, and fault handling.
+.NET 10 intralogistics orchestration platform that delivers the full warehouse automation workflow end to end, with APIs, SQL persistence, reporting, integration tests, messaging, actor-based orchestration, routing, and edge integration.
+It covers the complete flow from orders → pallets → machines → routing → dispatch and is built as a concrete, working event-driven industrial system.
 
 ## Architecture at a glance
 
@@ -70,16 +71,50 @@ See the ADRs in [docs/adr](docs/adr).
 
 ## Phase progress recap
 
-Status legend: Done | InProgress | ToDo
+### Snapshot
 
-| Status | Phase | Scope | Current evidence | Next step |
-| --- | --- | --- | --- | --- |
-| Done | Phase 1 - Runtime and build stability | .NET 10 migration and build reliability | `net10.0` applied, `dotnet restore` and `dotnet build -warnaserror` pass | Keep dependency updates under control |
-| Done | Phase 1 - Containerization baseline | Local runnable container setup | `Orders.Api` Dockerfile and compose service are present | Validate full compose flow from a clean environment |
-| Done | Phase 1 - Foundation + Orders.Api | Scaffold, baseline architecture, API entry points | Orders API endpoints implemented, EF migration generated, SQL report procedure bootstrap added | Extend behavior in Phase 2 with messaging/outbox integration |
-| Done | Phase 1 - Domain and tests hardening | Pallet lifecycle and architecture guardrails | Transition matrix coverage added; architecture, unit, and SQL integration tests pass (`dotnet test` green) | Keep growing domain coverage with Phase 3 actor behavior tests |
-| ToDo | Phase 2 - Messaging | RabbitMQ + MassTransit + outbox/inbox | Contracts project exists, messaging flow not implemented yet | Implement publisher/consumer flow with idempotency and retries |
-| ToDo | Phase 3 - Orchestrator actors | Akka.NET hierarchy, supervision, backpressure | Host skeleton exists | Implement actors and actor-level supervision/fault tests |
-| ToDo | Phase 4 - Rules + routing | NRules policies and dynamic rerouting | Routing domain baseline exists | Add rules, property-based routing tests, rerouting scenario |
-| ToDo | Phase 5 - Edge | Simulator + MQTT + store-and-forward | Simulator and gateway skeletons exist | Implement telemetry buffering, deduplication, outage recovery |
-| ToDo | Phase 6 - Quality, ops, docs | Observability, CI/CD, runbook completeness | Initial docs and ADR set present | Add dashboards, CI hardening, final runbook and recap |
+```mermaid
+pie title Phase Progress
+   "Done" : 4
+   "InProgress" : 0
+   "ToDo" : 5
+```
+
+```mermaid
+flowchart LR
+   subgraph Done
+      D1[Phase 1 - Runtime and build stability]
+      D2[Phase 1 - Containerization baseline]
+      D3[Phase 1 - Foundation + Orders.Api]
+      D4[Phase 1 - Domain and tests hardening]
+   end
+
+   subgraph ToDo
+      T2[Phase 2 - Messaging]
+      T3[Phase 3 - Orchestrator actors]
+      T4[Phase 4 - Rules + routing]
+      T5[Phase 5 - Edge]
+      T6[Phase 6 - Quality, ops, docs]
+   end
+
+   D4 --> T2 --> T3 --> T4 --> T5 --> T6
+```
+
+### Done
+
+| Phase | Scope | Evidence |
+| --- | --- | --- |
+| Phase 1 - Runtime and build stability | .NET 10 migration and build reliability | `net10.0` applied, `dotnet restore` and `dotnet build -warnaserror` pass |
+| Phase 1 - Containerization baseline | Local runnable container setup | `Orders.Api` Dockerfile and compose service present |
+| Phase 1 - Foundation + Orders.Api | Scaffold, baseline architecture, API entry points | Endpoints implemented, EF migration generated, SQL report stored procedure bootstrap added |
+| Phase 1 - Domain and tests hardening | Pallet lifecycle and architecture guardrails | Unit, architecture, and SQL integration tests pass (`dotnet test`) |
+
+### Next (ToDo)
+
+| Phase | Focus now | Next concrete step |
+| --- | --- | --- |
+| Phase 2 - Messaging | RabbitMQ + MassTransit + outbox/inbox | Implement publish/consume with idempotency and retries |
+| Phase 3 - Orchestrator actors | Akka.NET hierarchy, supervision, backpressure | Implement actors and supervision/fault-path tests |
+| Phase 4 - Rules + routing | NRules + dynamic rerouting | Add rules, property-based routing tests, rerouting scenario |
+| Phase 5 - Edge | Simulator + MQTT + store-and-forward | Implement buffering, deduplication, outage recovery tests |
+| Phase 6 - Quality, ops, docs | Observability, CI/CD, runbook completeness | Add dashboards, CI hardening, final runbook and recap |
