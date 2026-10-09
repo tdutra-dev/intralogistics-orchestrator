@@ -6,7 +6,10 @@
     <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
   </PropertyGroup>
   <ItemGroup>
+    <ProjectReference Include="../Contracts/Contracts.csproj" />
     <PackageReference Include="Microsoft.Data.Sqlite" />
+    <PackageReference Include="MassTransit" />
+    <PackageReference Include="MassTransit.RabbitMQ" />
     <PackageReference Include="MQTTnet" />
     <PackageReference Include="Microsoft.Extensions.Hosting" />
   </ItemGroup>

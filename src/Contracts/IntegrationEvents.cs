@@ -30,3 +30,15 @@ public sealed record MachineRecovered(Guid MachineId, DateTime UtcTimestamp) : I
 {
     public Guid EventId { get; } = Guid.NewGuid();
 }
+
+public sealed record MachineTelemetryReceived(
+    Guid MachineId,
+    long Sequence,
+    string Status,
+    decimal TemperatureC,
+    long CycleCount,
+    string? FaultCode,
+    DateTime UtcTimestamp) : IIntegrationEvent
+{
+    public Guid EventId { get; } = Guid.NewGuid();
+}

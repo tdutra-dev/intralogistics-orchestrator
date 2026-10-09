@@ -6,6 +6,7 @@
     <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
   </PropertyGroup>
   <ItemGroup>
+    <ProjectReference Include="../Contracts/Contracts.csproj" />
     <PackageReference Include="MQTTnet" />
     <PackageReference Include="Microsoft.Extensions.Hosting" />
   </ItemGroup>
